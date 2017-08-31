@@ -69,6 +69,11 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
     @IBOutlet var MBtn: UIButton!
     @IBOutlet var GameField: UILabel!
     @IBOutlet var MsgField: UILabel!
+    @IBOutlet var PopupLabel: UILabel!
+    @IBOutlet var PopupImg: UIImageView!
+    @IBOutlet var PopupMsgLabel: UILabel!
+    @IBOutlet var PopupBtn: UIButton!
+    @IBOutlet var PopupView: UIView!
 
     
     var wordArr : [String] = []
@@ -93,6 +98,8 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
     var pengusSaved = 0
     var stage: Int!
     var wordListURL: String!
+    let newBackButton = UIBarButtonItem(title: "Back", style: UIBarButtonItemStyle.plain, target: self, action: #selector(PenguViewController.back(sender:)))
+    var didWin : Bool = false
 
     override func viewDidLoad() {
         let gamesPlayedDefaults = UserDefaults.standard
@@ -103,6 +110,10 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
         gamesWon = gamesWonDefaults.value(forKey: "GamesWon") as! Int
         highestStage = highestStageDefaults.value(forKey: "HighestStage") as! Int
         penguPoints = penguPointsDefaults.value(forKey: "PenguPoints") as! Int
+        PopupView.layer.cornerRadius = 10
+        PopupView.layer.masksToBounds = true
+        PopupBtn.layer.cornerRadius = 10
+        PopupBtn.layer.masksToBounds = true
         showButtons()
         disable()
         super.viewDidLoad()
@@ -112,7 +123,6 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
         }
         hangCount = 0
         self.navigationItem.hidesBackButton = true
-        let newBackButton = UIBarButtonItem(title: "Back", style: UIBarButtonItemStyle.plain, target: self, action: #selector(PenguViewController.back(sender:)))
         self.navigationItem.leftBarButtonItem = newBackButton
         getRequest() { words in
             self.wordArr = words
@@ -161,6 +171,7 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
     func initializeObjects() {
         barrier.backgroundColor = UIColor.clear
         view.addSubview(barrier)
+        newBackButton.isEnabled = true
         PenguImage.image = #imageLiteral(resourceName: "PenguHit0")
         PenguImage1.image = #imageLiteral(resourceName: "PenguHit0")
         PenguImage2.image = #imageLiteral(resourceName: "PenguHit0")
@@ -287,6 +298,21 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
         }
         GameField.text = gameArr.joined(separator: "  ")
     }
+    func showPopUp() {
+        UIView.animate(withDuration: 0.5, animations: {
+            self.PopupView.frame.origin.y += 700
+            
+        })
+        if didWin == true {
+            self.PopupLabel.text = "YOU WIN"
+            self.PopupMsgLabel.text = "You rescued " + String(pengusSaved) + " Pengus!"
+        }
+        else {
+            self.PopupLabel.text = "YOU LOSE"
+            self.PopupMsgLabel.text = "The correct word was: \n" + String(mysteryWord)
+        }
+        }
+    
 
     func test() {
         if mysteryWord.range(of: guess) != nil {
@@ -308,7 +334,9 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
                 else {
                     showButtons()
                     disable()
+                    newBackButton.isEnabled = false
                     MsgField.text = "YOU WIN! CONGRATULATIONS!"
+                    didWin = true
                     gamesWon = gamesWon + 1
                     let gamesWonDefaults = UserDefaults.standard
                     gamesWonDefaults.setValue(gamesWon, forKey: "GamesWon")
@@ -339,9 +367,10 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
                         self.PenguImage3.isHidden = true
                         self.PenguImage4.isHidden = true
                         self.PenguImage5.isHidden = true
-                        let winAlert = UIAlertController(title: "You Win!", message: "You rescued " + String(6 - self.hangCount) + " Pengus!", preferredStyle: UIAlertControllerStyle.alert)
-                        winAlert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: {(action:UIAlertAction!) in self.navigationController?.popViewController(animated: true)}))
-                        self.present(winAlert, animated: true, completion: nil)
+                        self.showPopUp()
+//                        let winAlert = UIAlertController(title: "You Win!", message: "You rescued " + String(self.pengusSaved) + " Pengus!", preferredStyle: UIAlertControllerStyle.alert)
+//                        winAlert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: {(action:UIAlertAction!) in self.navigationController?.popViewController(animated: true)}))
+//                        self.present(winAlert, animated: true, completion: nil)
                     }
                     
                     return
@@ -356,6 +385,8 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
             if hangCount > 5 {
                 showButtons()
                 disable()
+                newBackButton.isEnabled = false
+                didWin = false
                 MsgField.text = "YOU LOSE! THE CORRECT WORD WAS: \n" + String(mysteryWord)
                 PenguImage5.animationImages = getKilledImg
                 PenguImage5.animationDuration = 3.0
@@ -363,9 +394,10 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
                 Timer.schedule(delay: 2.9) { _ in
                     self.PenguImage5.stopAnimating()
                     self.PenguImage5.isHidden = true
-                    let loseAlert = UIAlertController(title: "You Lost!", message: "The correct word is: \n" + self.mysteryWord, preferredStyle: UIAlertControllerStyle.alert)
-                    loseAlert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: {(action:UIAlertAction!) in self.navigationController?.popViewController(animated: true)}))
-                    self.present(loseAlert, animated: true, completion: nil)
+                    self.showPopUp()
+//                    let loseAlert = UIAlertController(title: "You Lost!", message: "The correct word is: \n" + self.mysteryWord, preferredStyle: UIAlertControllerStyle.alert)
+//                    loseAlert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.default, handler: {(action:UIAlertAction!) in self.navigationController?.popViewController(animated: true)}))
+//                    self.present(loseAlert, animated: true, completion: nil)
                     
                 }
                 return
@@ -430,8 +462,27 @@ class PenguViewController: UIViewController, UICollisionBehaviorDelegate {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
+        if segue.identifier == "toPopUp" {
+            let vc = segue.destination as! PopUpViewController
+            vc.didYouWin = didWin
+            vc.correctWord = String(mysteryWord)
+            vc.pengusSaved = pengusSaved
+            print(vc.didYouWin)
+            print(vc.correctWord)
+            print(vc.pengusSaved)
+            
+        }
+
+        
     }
-    */
+ */
+    @IBAction func DismissPopup(_ sender: Any) {
+        UIView.animate(withDuration: 0.2, animations: {
+            self.PopupView.frame.origin.y -= 700
+        })
+        self.navigationController?.popViewController(animated: true)
+    }
+    
     @IBAction func QPressed(_ sender: Any) {
         guess = "Q"
         self.QBtn.isHidden = true

@@ -392,7 +392,7 @@ class CampaignMapViewController: UIViewController {
     }
     @IBAction func Btn14Pressed(_ sender: Any) {
         stageSelected = 14
-        wordListLevel = "https://ericchung93.github.io/easy_words2.txt"
+        wordListLevel = "https://ericchung93.github.io/easy_words3.txt"
         PlayBtn.isEnabled = true
         display()
         allIce()
